@@ -21,6 +21,7 @@
       max-width: 1000px;
       border-radius: 8px;
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      overflow-x: auto;
     }
 
     table {
@@ -49,13 +50,13 @@
     input {
       border: none;
       background: transparent;
-      width: auto;
       min-width: 100px;
-      max-width: 100%;
       height: 30px;
       text-align: center;
       font-weight: bold;
       text-transform: uppercase;
+      font-size: 14px;
+      width: auto;
     }
 
     .action-btn {
@@ -89,7 +90,6 @@
       th, td {
         font-size: 12px;
         padding: 6px;
-        height: 20px;
       }
 
       input {
@@ -113,18 +113,16 @@
       </thead>
       <tbody id="refillBody">
         <tr>
-          <td class="yellow"><input type="text" class="expandable" value="" /></td>
-          <td class="green"><input type="number" value="" /></td>
+          <td class="yellow"><input type="text" class="expandable" /></td>
+          <td class="green"><input type="number" value="0" /></td>
           <td class="red"><input type="number" value="0" /></td>
-          <td class="row-buttons">
-            <button class="action-btn" onclick="removeRow(this)">🗑️</button>
-          </td>
+          <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>
       </tbody>
       <tfoot>
         <tr>
           <td class="gray">TOTAL</td>
-          <td class="gray" id="refillTotal">1000</td>
+          <td class="gray" id="refillTotal">0</td>
           <td class="gray" id="refillWithdrawTotal">0</td>
           <td><button class="action-btn" onclick="addRefillRow()">➕ Add Row</button></td>
         </tr>
@@ -145,11 +143,9 @@
       <tbody id="withdrawalBody">
         <tr>
           <td class="yellow"><input type="text" class="expandable" /></td>
-          <td class="green"><input type="number" /></td>
-          <td class="red"><input type="number" /></td>
-          <td class="row-buttons">
-            <button class="action-btn" onclick="removeRow(this)">🗑️</button>
-          </td>
+          <td class="green"><input type="number" value="0" /></td>
+          <td class="red"><input type="number" value="0" /></td>
+          <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>
       </tbody>
       <tfoot>
@@ -200,7 +196,7 @@
         input.addEventListener('input', () => {
           if (input.type === 'text') {
             input.value = input.value.toUpperCase();
-            input.style.width = Math.max(input.value.length, 10) + 'ch';
+            input.style.width = Math.max(input.value.length * 0.75, 10) + 'ch';
           }
           calculateTotals();
         });
