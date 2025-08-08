@@ -35,11 +35,11 @@
       padding: 10px;
       text-align: center;
       font-size: 14px;
+      font-weight: bold;
     }
 
     th {
       background-color: #ffff99;
-      font-weight: bold;
     }
 
     .yellow { background-color: #ffe599; }
@@ -47,16 +47,25 @@
     .red   { background-color: #f4cccc; }
     .gray  { background-color: #f0f0f0; }
 
-    input {
+    input[type="text"] {
       border: none;
       background: transparent;
-      min-width: 100px;
-      height: 30px;
+      font-size: 14px;
       text-align: center;
       font-weight: bold;
       text-transform: uppercase;
-      font-size: 14px;
       width: auto;
+      min-width: 80px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      text-align: center;
+      font-weight: bold;
+      background: transparent;
+      border: none;
     }
 
     .action-btn {
@@ -92,7 +101,7 @@
         padding: 6px;
       }
 
-      input {
+      input[type="text"], input[type="number"] {
         font-size: 12px;
       }
     }
@@ -113,9 +122,9 @@
       </thead>
       <tbody id="refillBody">
         <tr>
-          <td class="yellow"><input type="text" class="expandable" /></td>
-          <td class="green"><input type="number" value="0" /></td>
-          <td class="red"><input type="number" value="0" /></td>
+          <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
+          <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
           <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>
       </tbody>
@@ -142,9 +151,9 @@
       </thead>
       <tbody id="withdrawalBody">
         <tr>
-          <td class="yellow"><input type="text" class="expandable" /></td>
-          <td class="green"><input type="number" value="0" /></td>
-          <td class="red"><input type="number" value="0" /></td>
+          <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
+          <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
           <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>
       </tbody>
@@ -162,45 +171,36 @@
   <button id="downloadBtn" onclick="downloadPDF()">Download PDF</button>
 
   <script>
+    function autoGrowInput(el) {
+      el.style.width = '10px'; // reset
+      el.style.width = (el.scrollWidth + 10) + 'px';
+    }
+
     function addRefillRow() {
       const row = `
         <tr>
-          <td class="yellow"><input type="text" class="expandable" /></td>
-          <td class="green"><input type="number" value="0" /></td>
-          <td class="red"><input type="number" value="0" /></td>
+          <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
+          <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
           <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>`;
       document.getElementById('refillBody').insertAdjacentHTML('beforeend', row);
-      attachInputListeners();
     }
 
     function addWithdrawalRow() {
       const row = `
         <tr>
-          <td class="yellow"><input type="text" class="expandable" /></td>
-          <td class="green"><input type="number" value="0" /></td>
-          <td class="red"><input type="number" value="0" /></td>
+          <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
+          <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
           <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>`;
       document.getElementById('withdrawalBody').insertAdjacentHTML('beforeend', row);
-      attachInputListeners();
     }
 
     function removeRow(btn) {
       btn.closest('tr').remove();
       calculateTotals();
-    }
-
-    function attachInputListeners() {
-      document.querySelectorAll('input').forEach(input => {
-        input.addEventListener('input', () => {
-          if (input.type === 'text') {
-            input.value = input.value.toUpperCase();
-            input.style.width = Math.max(input.value.length * 0.75, 10) + 'ch';
-          }
-          calculateTotals();
-        });
-      });
     }
 
     function calculateTotals() {
@@ -237,16 +237,19 @@
       const pdf = new jsPDF('p', 'pt', 'a4');
 
       const pageWidth = pdf.internal.pageSize.getWidth();
-      const imgWidth = pageWidth - 40;
+      const margin = 20;
+      const imgWidth = pageWidth - margin * 2;
       const imgHeight = canvas.height * (imgWidth / canvas.width);
 
-      pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
       pdf.save('Hisab_Table.pdf');
     }
 
-    // Initial setup
-    attachInputListeners();
-    calculateTotals();
+    // Initialize
+    window.addEventListener('load', () => {
+      document.querySelectorAll('input[type="text"]').forEach(autoGrowInput);
+      calculateTotals();
+    });
   </script>
 </body>
 </html>
