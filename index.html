@@ -116,7 +116,9 @@
     <!-- REFILL DIFFERENCE -->
     <table id="refillTable">
       <thead>
-        <tr><th colspan="4">REFILL DIFFERENCE: <span id="refillDiff">0</span></th></tr>
+        <tr>
+          <th colspan="4">REFILL DIFFERENCE: <span id="refillDiff">0</span></th>
+        </tr>
         <tr>
           <th class="yellow">SITE NAME</th>
           <th class="green">SITE REFILL</th>
@@ -145,11 +147,12 @@
     <!-- WITHDRAWAL DIFFERENCE -->
     <table id="withdrawalTable">
       <thead>
-        <tr><th colspan="4">WITHDRAWAL DIFFERENCE: <span id="withdrawDiff">0</span></th></tr>
+        <tr>
+          <th colspan="4">WITHDRAWAL DIFFERENCE: <span id="withdrawDiff">0</span></th>
+        </tr>
         <tr>
           <th class="yellow">REFILL ACCOUNT</th>
           <th class="green">REFILL AMOUNT</th>
-          <th class="red">WITHDRAWAL AMOUNT</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -157,7 +160,6 @@
         <tr>
           <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
           <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
-          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
           <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>
       </tbody>
@@ -165,7 +167,6 @@
         <tr>
           <td class="gray">TOTAL</td>
           <td class="gray" id="withdrawalTotal">0</td>
-          <td class="gray" id="withdrawalWithdrawTotal">0</td>
           <td><button class="action-btn" onclick="addWithdrawalRow()">➕ Add Row</button></td>
         </tr>
       </tfoot>
@@ -174,7 +175,9 @@
     <!-- BALANCE DIFFERENCE -->
     <table id="balanceTable">
       <thead>
-        <tr><th colspan="4">BALANCE DIFFERENCE: <span id="balanceDiff">0</span></th></tr>
+        <tr>
+          <th colspan="4">BALANCE USED: <span id="balanceDiff">0</span></th>
+        </tr>
         <tr>
           <th class="yellow">ACCOUNT NAME</th>
           <th class="green">BALANCE TAKEN</th>
@@ -205,9 +208,9 @@
 
   <script>
     function autoGrowInput(el) {
-      el.value = el.value.toUpperCase(); // force uppercase
-      el.style.width = '10px'; // reset width
-      el.style.width = (el.scrollWidth + 10) + 'px'; // expand
+      el.value = el.value.toUpperCase();
+      el.style.width = '10px';
+      el.style.width = (el.scrollWidth + 10) + 'px';
     }
 
     function addRefillRow() {
@@ -226,7 +229,6 @@
         <tr>
           <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
           <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
-          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
           <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>`;
       document.getElementById('withdrawalBody').insertAdjacentHTML('beforeend', row);
@@ -257,16 +259,12 @@
       document.getElementById('refillTotal').textContent = refillTotal;
       document.getElementById('refillWithdrawTotal').textContent = refillWithdraw;
 
-      let withdrawalTotal = 0, withdrawalWithdraw = 0;
+      let withdrawalTotal = 0;
       document.querySelectorAll('#withdrawalBody tr').forEach(row => {
         withdrawalTotal += parseFloat(row.children[1].querySelector('input').value || 0);
-        withdrawalWithdraw += parseFloat(row.children[2].querySelector('input').value || 0);
       });
       document.getElementById('withdrawalTotal').textContent = withdrawalTotal;
-      document.getElementById('withdrawalWithdrawTotal').textContent = withdrawalWithdraw;
-
-      document.getElementById('refillDiff').textContent = refillTotal - withdrawalTotal;
-      document.getElementById('withdrawDiff').textContent = refillWithdraw - withdrawalWithdraw;
+      document.getElementById('refillDiff').textContent = withdrawalTotal - refillTotal;
 
       let takenTotal = 0, availableTotal = 0;
       document.querySelectorAll('#balanceBody tr').forEach(row => {
@@ -276,11 +274,15 @@
       document.getElementById('takenTotal').textContent = takenTotal;
       document.getElementById('availableTotal').textContent = availableTotal;
       document.getElementById('balanceDiff').textContent = takenTotal - availableTotal;
+      document.getElementById('withdrawDiff').textContent = takenTotal - availableTotal - refillWithdraw;
     }
 
     async function downloadPDF() {
       const { jsPDF } = window.jspdf;
       const captureElement = document.getElementById('capture');
+
+      const originalWidth = captureElement.style.width;
+      captureElement.style.width = '210mm';
 
       const canvas = await html2canvas(captureElement, {
         scale: 2,
@@ -288,23 +290,34 @@
         backgroundColor: "#ffffff"
       });
 
+      captureElement.style.width = originalWidth;
+
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'pt', 'a4');
+      const pdf = new jsPDF('p', 'mm', 'a4');
 
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const margin = 20;
-      const imgWidth = pageWidth - margin * 2;
-      const imgHeight = canvas.height * (imgWidth / canvas.width);
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+      let position = 0;
+
+      if (imgHeight < pageHeight) {
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      } else {
+        let heightLeft = imgHeight;
+        while (heightLeft > 0) {
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+          if (heightLeft > 0) {
+            pdf.addPage();
+            position = 0;
+          }
+        }
+      }
+
       pdf.save('Hisab_Table.pdf');
     }
-
-    // Initialize on load
-    window.addEventListener('load', () => {
-      document.querySelectorAll('input[type="text"]').forEach(autoGrowInput);
-      calculateTotals();
-    });
   </script>
 </body>
 </html>
