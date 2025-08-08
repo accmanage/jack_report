@@ -43,9 +43,9 @@
     }
 
     .yellow { background-color: #ffe599; }
-    .green { background-color: #d9ead3; }
-    .red   { background-color: #f4cccc; }
-    .gray  { background-color: #f0f0f0; }
+    .green  { background-color: #d9ead3; }
+    .red    { background-color: #f4cccc; }
+    .gray   { background-color: #f0f0f0; }
 
     input[type="text"] {
       border: none;
@@ -53,11 +53,12 @@
       font-size: 14px;
       text-align: center;
       font-weight: bold;
-      text-transform: uppercase;
       width: auto;
       min-width: 80px;
       overflow: hidden;
       white-space: nowrap;
+      height: 30px;
+      padding: 0 5px;
     }
 
     input[type="number"] {
@@ -101,8 +102,11 @@
         padding: 6px;
       }
 
-      input[type="text"], input[type="number"] {
+      input[type="text"],
+      input[type="number"] {
         font-size: 12px;
+        text-transform: uppercase;
+        height: 20px;
       }
     }
   </style>
@@ -166,14 +170,44 @@
         </tr>
       </tfoot>
     </table>
+
+    <!-- BALANCE DIFFERENCE -->
+    <table id="balanceTable">
+      <thead>
+        <tr><th colspan="4">BALANCE DIFFERENCE: <span id="balanceDiff">0</span></th></tr>
+        <tr>
+          <th class="yellow">ACCOUNT NAME</th>
+          <th class="green">BALANCE TAKEN</th>
+          <th class="red">BALANCE AVAILABLE</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="balanceBody">
+        <tr>
+          <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
+          <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="gray">TOTAL</td>
+          <td class="gray" id="takenTotal">0</td>
+          <td class="gray" id="availableTotal">0</td>
+          <td><button class="action-btn" onclick="addBalanceRow()">➕ Add Row</button></td>
+        </tr>
+      </tfoot>
+    </table>
   </div>
 
   <button id="downloadBtn" onclick="downloadPDF()">Download PDF</button>
 
   <script>
     function autoGrowInput(el) {
-      el.style.width = '10px'; // reset
-      el.style.width = (el.scrollWidth + 10) + 'px';
+      el.value = el.value.toUpperCase(); // force uppercase
+      el.style.width = '10px'; // reset width
+      el.style.width = (el.scrollWidth + 10) + 'px'; // expand
     }
 
     function addRefillRow() {
@@ -198,6 +232,17 @@
       document.getElementById('withdrawalBody').insertAdjacentHTML('beforeend', row);
     }
 
+    function addBalanceRow() {
+      const row = `
+        <tr>
+          <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
+          <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
+        </tr>`;
+      document.getElementById('balanceBody').insertAdjacentHTML('beforeend', row);
+    }
+
     function removeRow(btn) {
       btn.closest('tr').remove();
       calculateTotals();
@@ -211,7 +256,6 @@
       });
       document.getElementById('refillTotal').textContent = refillTotal;
       document.getElementById('refillWithdrawTotal').textContent = refillWithdraw;
-      document.getElementById('refillDiff').textContent = refillTotal - refillWithdraw;
 
       let withdrawalTotal = 0, withdrawalWithdraw = 0;
       document.querySelectorAll('#withdrawalBody tr').forEach(row => {
@@ -220,7 +264,18 @@
       });
       document.getElementById('withdrawalTotal').textContent = withdrawalTotal;
       document.getElementById('withdrawalWithdrawTotal').textContent = withdrawalWithdraw;
-      document.getElementById('withdrawDiff').textContent = withdrawalTotal - withdrawalWithdraw;
+
+      document.getElementById('refillDiff').textContent = refillTotal - withdrawalTotal;
+      document.getElementById('withdrawDiff').textContent = refillWithdraw - withdrawalWithdraw;
+
+      let takenTotal = 0, availableTotal = 0;
+      document.querySelectorAll('#balanceBody tr').forEach(row => {
+        takenTotal += parseFloat(row.children[1].querySelector('input').value || 0);
+        availableTotal += parseFloat(row.children[2].querySelector('input').value || 0);
+      });
+      document.getElementById('takenTotal').textContent = takenTotal;
+      document.getElementById('availableTotal').textContent = availableTotal;
+      document.getElementById('balanceDiff').textContent = takenTotal - availableTotal;
     }
 
     async function downloadPDF() {
@@ -245,7 +300,7 @@
       pdf.save('Hisab_Table.pdf');
     }
 
-    // Initialize
+    // Initialize on load
     window.addEventListener('load', () => {
       document.querySelectorAll('input[type="text"]').forEach(autoGrowInput);
       calculateTotals();
