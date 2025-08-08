@@ -16,12 +16,13 @@
     }
     .table-wrapper {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
-      flex-wrap: wrap;
       padding: 10px;
       background: white;
       border-radius: 8px;
+      overflow-x: auto;
     }
     table {
       border-collapse: collapse;
@@ -69,36 +70,38 @@
       cursor: pointer;
       border-radius: 4px;
     }
-
-    textarea {
-      width: auto;
-      min-width: 100%;
-      min-height: 19px;
-      overflow: hidden;
-      resize: none;
+    input[type="text"], input[type="number"] {
+      min-height: 20px;
       border: none;
       background: transparent;
-      text-align: center;
       font-size: 14px;
-      font-family: inherit;
       text-transform: uppercase;
       outline: none;
-    }
-
-    input[type="number"] {
+      resize: none;
       width: 100%;
-      min-height: 18px;
-      border: none;
-      background: transparent;
-      text-align: center;
-      font-size: 14px;
-      outline: none;
+      overflow: hidden;
     }
-
+    .auto-expand {
+      display: inline-block;
+      min-width: 100%;
+      max-width: 100%;
+      white-space: nowrap;
+    }
     table td:first-child {
       min-width: 180px;
     }
-
+    @media (max-width: 600px) {
+      table {
+        max-width: 100%;
+      }
+      th, td {
+        font-size: 12px;
+        padding: 6px;
+      }
+      input {
+        font-size: 12px;
+      }
+    }
     @media print {
       body {
         zoom: 100%;
@@ -156,9 +159,11 @@
     <button onclick="downloadPDF()">Download PDF</button>
   </div>
 
+  <!-- Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+  <!-- Script -->
   <script>
     const refillTable = document.getElementById('refillTable').querySelector('tbody');
     const withdrawalTable = document.getElementById('withdrawalTable').querySelector('tbody');
@@ -166,28 +171,28 @@
     function addRow() {
       const refillRow = document.createElement('tr');
       refillRow.innerHTML = `
-        <td class="yellow"><textarea oninput="autoGrow(this)"></textarea></td>
-        <td class="green"><input type="number" oninput="updateTotals()" /></td>
-        <td class="red"><input type="number" oninput="updateTotals()" /></td>
+        <td class="yellow"><input type="text" class="auto-expand" oninput="autoResize(this); updateTotals();"/></td>
+        <td class="green"><input type="number" oninput="updateTotals()"/></td>
+        <td class="red"><input type="number" oninput="updateTotals()"/></td>
       `;
       refillTable.appendChild(refillRow);
 
       const withdrawalRow = document.createElement('tr');
       withdrawalRow.innerHTML = `
-        <td class="yellow"><textarea oninput="autoGrow(this)"></textarea></td>
-        <td class="green"><input type="number" oninput="updateTotals()" /></td>
-        <td class="red"><input type="number" oninput="updateTotals()" /></td>
+        <td class="yellow"><input type="text" class="auto-expand" oninput="autoResize(this); updateTotals();"/></td>
+        <td class="green"><input type="number" oninput="updateTotals()"/></td>
+        <td class="red"><input type="number" oninput="updateTotals()"/></td>
       `;
       withdrawalTable.appendChild(withdrawalRow);
 
       enforceUppercase();
     }
 
-    function autoGrow(textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.width = 'auto';
-      textarea.style.height = textarea.scrollHeight + "px";
-      textarea.style.width = textarea.scrollWidth + "px";
+    function autoResize(input) {
+      input.style.height = "auto";
+      input.style.height = input.scrollHeight + "px";
+      input.style.width = "auto";
+      input.style.width = (input.scrollWidth + 10) + "px";
     }
 
     function updateTotals() {
@@ -239,7 +244,7 @@
     }
 
     function enforceUppercase() {
-      document.querySelectorAll('textarea').forEach(input => {
+      document.querySelectorAll('input[type="text"]').forEach(input => {
         input.addEventListener('input', function () {
           const pos = this.selectionStart;
           this.value = this.value.toUpperCase();
