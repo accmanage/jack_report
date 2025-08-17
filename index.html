@@ -153,6 +153,7 @@
         <tr>
           <th class="yellow">REFILL ACCOUNT</th>
           <th class="green">REFILL AMOUNT</th>
+          <th class="red">REFILL WITHDRAWAL</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -160,6 +161,7 @@
         <tr>
           <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
           <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
           <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>
       </tbody>
@@ -167,6 +169,7 @@
         <tr>
           <td class="gray">TOTAL</td>
           <td class="gray" id="withdrawalTotal">0</td>
+          <td class="gray" id="withdrawalWithdrawTotal">0</td>
           <td><button class="action-btn" onclick="addWithdrawalRow()">➕ Add Row</button></td>
         </tr>
       </tfoot>
@@ -229,6 +232,7 @@
         <tr>
           <td class="yellow"><input type="text" class="expandable" oninput="autoGrowInput(this)" /></td>
           <td class="green"><input type="number" value="0" oninput="calculateTotals()" /></td>
+          <td class="red"><input type="number" value="0" oninput="calculateTotals()" /></td>
           <td class="row-buttons"><button class="action-btn" onclick="removeRow(this)">🗑️</button></td>
         </tr>`;
       document.getElementById('withdrawalBody').insertAdjacentHTML('beforeend', row);
@@ -259,12 +263,13 @@
       document.getElementById('refillTotal').textContent = refillTotal;
       document.getElementById('refillWithdrawTotal').textContent = refillWithdraw;
 
-      let withdrawalTotal = 0;
+      let withdrawalTotal = 0, withdrawalWithdraw = 0;
       document.querySelectorAll('#withdrawalBody tr').forEach(row => {
         withdrawalTotal += parseFloat(row.children[1].querySelector('input').value || 0);
+        withdrawalWithdraw += parseFloat(row.children[2].querySelector('input').value || 0);
       });
       document.getElementById('withdrawalTotal').textContent = withdrawalTotal;
-      document.getElementById('refillDiff').textContent = withdrawalTotal - refillTotal;
+      document.getElementById('withdrawalWithdrawTotal').textContent = withdrawalWithdraw;
 
       let takenTotal = 0, availableTotal = 0;
       document.querySelectorAll('#balanceBody tr').forEach(row => {
@@ -273,6 +278,9 @@
       });
       document.getElementById('takenTotal').textContent = takenTotal;
       document.getElementById('availableTotal').textContent = availableTotal;
+
+      // Keep old difference logic
+      document.getElementById('refillDiff').textContent = withdrawalTotal - refillTotal;
       document.getElementById('balanceDiff').textContent = takenTotal - availableTotal;
       document.getElementById('withdrawDiff').textContent = takenTotal - availableTotal - refillWithdraw;
     }
@@ -285,7 +293,7 @@
       captureElement.style.width = '210mm';
 
       const canvas = await html2canvas(captureElement, {
-        scale: 2,
+        scale: 1,
         useCORS: true,
         backgroundColor: "#ffffff"
       });
@@ -298,26 +306,24 @@
       const pageWidth = 210;
       const pageHeight = 297;
       const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width; // keep aspect ratio
 
+      let heightLeft = imgHeight;
       let position = 0;
 
-      if (imgHeight < pageHeight) {
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight; // move image upwards
+        pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      } else {
-        let heightLeft = imgHeight;
-        while (heightLeft > 0) {
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-          if (heightLeft > 0) {
-            pdf.addPage();
-            position = 0;
-          }
-        }
+        heightLeft -= pageHeight;
       }
 
       pdf.save('Hisab_Table.pdf');
     }
+
   </script>
 </body>
 </html>
