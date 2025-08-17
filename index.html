@@ -116,6 +116,10 @@
     <!-- REFILL DIFFERENCE -->
     <table id="refillTable">
       <thead>
+	<tr>
+          <th colspan="4"><span id="profitLoss">0</span>
+          </th>
+        </tr>
         <tr>
           <th colspan="4">REFILL DIFFERENCE: <span id="refillDiff">0</span></th>
         </tr>
@@ -262,6 +266,23 @@
       });
       document.getElementById('refillTotal').textContent = refillTotal;
       document.getElementById('refillWithdrawTotal').textContent = refillWithdraw;
+
+      let profitLoss = refillTotal - refillWithdraw;
+      let profitLossEl = document.getElementById('profitLoss');
+
+      if (profitLoss > 0) {
+        profitLossEl.textContent = "Profit: " + profitLoss ;
+        profitLossEl.style.color = "green";
+      } else if (profitLoss < 0) {
+        profitLossEl.textContent = "Loss: " + Math.abs(profitLoss) ;
+        profitLossEl.style.color = "red";
+      } else {
+        profitLossEl.textContent = "Break Even: 0";
+        profitLossEl.style.color = "gray";
+      }
+
+
+
 
       let withdrawalTotal = 0, withdrawalWithdraw = 0;
       document.querySelectorAll('#withdrawalBody tr').forEach(row => {
